@@ -39,6 +39,10 @@ func CreateResourceLabels(resourceID string) map[string]string {
 }
 
 func hasAggregation(t config.Target, aggregation string) bool {
+	if len(t.Aggregations) == 0 {
+		return true
+	}
+
 	for _, aggr := range t.Aggregations {
 		if aggr == aggregation {
 			return true
