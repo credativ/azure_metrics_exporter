@@ -6,17 +6,19 @@ credentials:
   client_secret: <secret>
   tenant_id: <secret>
 
-targets:
-  - resource: "/resourceGroups/blog-group/providers/Microsoft.Web/sites/blog"
+resources:
+  - name: "/resourceGroups/blog-group/providers/Microsoft.Web/sites/blog"
     metrics:
-    - name: "BytesReceived"
-    - name: "BytesSent"
+      - "BytesReceived"
+      - "BytesSent"
   - resource: "/resourceGroups/app-group/providers/Microsoft.Web/sites/app"
     metrics:
-    - name: "Http2xx"
-    - name: "Http5xx"
-  - resource_group: "webapps"
+      - "Http2xx"
+      - "Http5xx"
+
+resource_groups:
+  - name: "webapps"
     resource_types:
-    - "Microsoft.Compute/virtualMachines"
+      - "Microsoft.Compute/virtualMachines"
     metrics:
-    - name: "CPU Credits Consumed"
+      - name: "CPU Credits Consumed"

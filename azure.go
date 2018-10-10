@@ -129,8 +129,8 @@ func (ac *AzureClient) getMetricDefinitions() (map[string]AzureMetricDefinitionR
 	apiVersion := "2018-01-01"
 	definitions := make(map[string]AzureMetricDefinitionResponse)
 
-	for _, target := range sc.C.Targets {
-		metricsResource := fmt.Sprintf("subscriptions/%s%s", sc.C.Credentials.SubscriptionID, target.Resource)
+	for _, target := range sc.C.Resources {
+		metricsResource := fmt.Sprintf("subscriptions/%s%s", sc.C.Credentials.SubscriptionID, target.Name)
 		metricsTarget := fmt.Sprintf("https://management.azure.com/%s/providers/microsoft.insights/metricDefinitions?api-version=%s", metricsResource, apiVersion)
 		req, err := http.NewRequest("GET", metricsTarget, nil)
 		if err != nil {
@@ -155,7 +155,7 @@ func (ac *AzureClient) getMetricDefinitions() (map[string]AzureMetricDefinitionR
 		if err != nil {
 			return nil, fmt.Errorf("Error unmarshalling response body: %v", err)
 		}
-		definitions[target.Resource] = def
+		definitions[target.Name] = def
 	}
 	return definitions, nil
 }

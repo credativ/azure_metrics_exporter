@@ -11,8 +11,9 @@ import (
 
 // Config - Azure exporter configuration
 type Config struct {
-	Credentials Credentials `yaml:"credentials"`
-	Targets     []Target    `yaml:"targets"`
+	Credentials    Credentials     `yaml:"credentials"`
+	Resources      []Resource      `yaml:"resources"`
+	ResourceGroups []ResourceGroup `yaml:"resource_groups"`
 
 	// Catches all undefined fields and must be empty after parsing.
 	XXX map[string]interface{} `yaml:",inline"`
@@ -50,33 +51,60 @@ func (sc *SafeConfig) ReloadConfig(confFile string) (err error) {
 
 var validAggregations = []string{"Total", "Average", "Minimum", "Maximum"}
 
-func (c *Config) Validate() (err error) {
-	for _, t := range c.Targets {
-		for _, a := range t.Aggregations {
-			ok := false
-			for _, valid := range validAggregations {
-				if a == valid {
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				return fmt.Errorf("%s is not one of the valid aggregations (%v)", a, validAggregations)
+func (c *Config) validateAggregations(aggregations []string) error {
+	for _, a := range aggregations {
+		ok := false
+		for _, valid := range validAggregations {
+			if a == valid {
+				ok = true
+				break
 			}
 		}
-
-		if len(t.Resource) == 0 && len(t.ResourceGroup) == 0 {
-			return fmt.Errorf("resource or resoure_group needs to be specified in each target")
-		}
-
-		if len(t.Resource) != 0 && len(t.ResourceGroup) != 0 {
-			return fmt.Errorf("Only one of resource and resoure_group can be specified in each target")
-		}
-
-		if len(t.Resource) != 0 && !strings.HasPrefix(t.Resource, "/") {
-			return fmt.Errorf("Resource path %q must start with a /", t.Resource)
+		if !ok {
+			return fmt.Errorf("%s is not one of the valid aggregations (%v)", a, validAggregations)
 		}
 	}
+
+	return nil
+}
+
+func (c *Config) Validate() (err error) {
+	for _, t := range c.Resources {
+		if err := c.validateAggregations(t.Aggregations); err != nil {
+			return err
+		}
+
+		if len(t.Name) == 0 {
+			return fmt.Errorf("name needs to be specified in each resource")
+		}
+
+		if !strings.HasPrefix(t.Name, "/") {
+			return fmt.Errorf("Resource path %q must start with a /", t.Name)
+		}
+
+		if len(t.Metrics) == 0 {
+			return fmt.Errorf("At least one metric needs to be specified in each resource")
+		}
+	}
+
+	for _, t := range c.ResourceGroups {
+		if err := c.validateAggregations(t.Aggregations); err != nil {
+			return err
+		}
+
+		if len(t.Name) == 0 {
+			return fmt.Errorf("name needs to be specified in each resource group")
+		}
+
+		if len(t.Name) == 0 {
+			return fmt.Errorf("At lease one resource type needs to be specified in each resource group")
+		}
+
+		if len(t.Metrics) == 0 {
+			return fmt.Errorf("At least one metric needs to be specified in each resource group")
+		}
+	}
+
 	return nil
 }
 
@@ -91,19 +119,20 @@ type Credentials struct {
 }
 
 // Target represents Azure target resource and its associated metric definitions
-type Target struct {
-	Resource      string   `yaml:"resource"`
-	ResourceGroup string   `yaml:"resource_group"`
-	ResourceTypes []string `yaml:"resource_types"`
-	Metrics       []Metric `yaml:"metrics"`
-	Aggregations  []string `yaml:"aggregations"`
+type Resource struct {
+	Name         string   `yaml:"name"`
+	Metrics      []string `yaml:"metrics"`
+	Aggregations []string `yaml:"aggregations"`
 
 	XXX map[string]interface{} `yaml:",inline"`
 }
 
-// Metric defines metric name
-type Metric struct {
-	Name string `yaml:"name"`
+// Target represents Azure target resource and its associated metric definitions
+type ResourceGroup struct {
+	Name          string   `yaml:"name"`
+	ResourceTypes []string `yaml:"resource_types"`
+	Metrics       []string `yaml:"metrics"`
+	Aggregations  []string `yaml:"aggregations"`
 
 	XXX map[string]interface{} `yaml:",inline"`
 }
@@ -144,8 +173,20 @@ func (s *Credentials) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (s *Metric) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain Metric
+func (s *Resource) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain Resource
+	if err := unmarshal((*plain)(s)); err != nil {
+		return err
+	}
+	if err := checkOverflow(s.XXX, "config"); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface.
+func (s *ResourceGroup) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain ResourceGroup
 	if err := unmarshal((*plain)(s)); err != nil {
 		return err
 	}
