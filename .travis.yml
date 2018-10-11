@@ -1,6 +1,6 @@
 sudo: false
 language: go
-go_import_path: github.com/RobustPerception/azure_metrics_exporter
+go_import_path: github.com/credativ/azure_metrics_exporter
 
 install: true
 

@@ -128,5 +128,5 @@
 			"revision": "5420a8b6744d3b0345ab293f6fcba19c978f1183"
 		}
 	],
-	"rootPath": "github.com/RobustPerception/azure_metrics_exporter"
+	"rootPath": "github.com/credativ/azure_metrics_exporter"
 }

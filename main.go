@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/RobustPerception/azure_metrics_exporter/config"
+	"github.com/credativ/azure_metrics_exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
