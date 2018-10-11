@@ -11,7 +11,9 @@ resources:
     metrics:
       - "BytesReceived"
       - "BytesSent"
-  - resource: "/resourceGroups/app-group/providers/Microsoft.Web/sites/app"
+    aggregations:
+      - "Average"
+  - name: "/resourceGroups/app-group/providers/Microsoft.Web/sites/app"
     metrics:
       - "Http2xx"
       - "Http5xx"
@@ -26,3 +28,5 @@ resource_groups:
       - "^testvm12$"
     metrics:
       - name: "CPU Credits Consumed"
+    aggregations:
+      - "Average"
